@@ -1,0 +1,2 @@
+"not.existing.path": "green"
+"page1.available-filters.name-filter.sort": "asc"
