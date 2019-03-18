@@ -62,5 +62,51 @@ class TestParser(unittest.TestCase):
         self.assertEqual(args.force_create, True)
 
 
+class TestLoadJsonConfig(unittest.TestCase):
+
+    def setUp(self):
+        self.file = tempfile.NamedTemporaryFile()
+        self.file.file.write(b"""{}""")
+        self.file.file.seek(0)
+        self.config = tempfile.NamedTemporaryFile()
+        self.config.file.write(b"""
+        line1: some:test
+        line2: some:test
+        """)
+
+    def tearDown(self):
+        self.file.close()
+        self.config.close()
+
+    def test_load_invalid_json(self):
+        self.config.file.seek(0)
+        with self.assertRaises(json.decoder.JSONDecodeError) as cm:
+            value = load_json_config(self.config.file)
+
+    def test_load_valid_json(self):
+        self.file.file.seek(0)
+        value = load_json_config(self.file.file)
+        self.assertDictEqual(value, {})
+
+
+class TestReadLineByLine(unittest.TestCase):
+    def setUp(self):
+        self.testfile = tempfile.NamedTemporaryFile()
+        self.testfile.file.write(b"""line1: some:test\nline2: some:test""")
+        self.testfile.file.seek(0)
+
+    def tearDown(self):
+        self.testfile.close()
+
+    def test_iterate_on_each_line(self):
+        it = read_line_by_line(self.testfile.file)
+        line1 = it.__next__()
+        self.assertEqual(line1, b"line1: some:test\n")
+        line1 = it.__next__()
+        self.assertEqual(line1, b"line2: some:test")
+        with self.assertRaises(StopIteration) as e:
+            it.__next__()
+
+
 if __name__ == '__main__':
     unittest.main()
