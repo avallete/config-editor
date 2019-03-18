@@ -72,6 +72,28 @@ def parse_changes_file(file):
     return changes
 
 
+def get_update_or_create_value(obj, path, value, force_create=False):
+    subpaths = path.split(".")
+    lastkey = subpaths[-1]
+    if len(subpaths) > 1:
+        subpaths.pop()  # Remove the last element since it will be assign at the end
+        # Let's create our path into our config recursively
+        for p in subpaths:
+            if not obj.get(p):
+                if force_create:
+                    obj[p] = {}
+                else:
+                    raise KeyError("""
+                        Cannot update %s because %s does not exist in the subpath.
+                        Please use the -p option to force create.
+                    """ % (path, p))
+            obj = obj[p]
+    # Assign our value to our last key
+    obj[lastkey] = value
+    # We don't need to return anything since obj is a dict and are so updated using references
+    return
+
+
 if __name__ == "__main__":
     parser = parser_creator()
     if len(sys.argv) == 1:
@@ -81,6 +103,9 @@ if __name__ == "__main__":
     try:
         configfile = load_json_config(args.file)
         changes = parse_changes_file(args.changes)
+        for path_to_change, value in changes:
+            get_update_or_create_value(configfile, path_to_change, value, force_create=args.force_create)
+        print(json.dumps(configfile), file=args.output)
         sys.exit(0)
     except Exception as e:
         logger.error("An error occured: %s" % e)

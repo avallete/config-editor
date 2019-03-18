@@ -108,5 +108,30 @@ class TestReadLineByLine(unittest.TestCase):
             it.__next__()
 
 
+class TestGetUpdateOrCreateValue(unittest.TestCase):
+
+    def test_update_value(self):
+        obj = {'a': {'deep': {'path': 42}}}
+        path = 'a.deep.path'
+        value = 44
+        get_update_or_create_value(obj, path, value)
+        self.assertEqual(obj['a']['deep']['path'], 44)
+
+    def test_fail_update_invalid_path_subelement(self):
+        obj = {'a': {'deep': {'path': 42}}}
+        path = 'a.deep2.path'
+        value = 44
+        with self.assertRaises(KeyError):
+            get_update_or_create_value(obj, path, value, force_create=False)
+
+    def test_success_update_invalid_path_subelement(self):
+        obj = {'a': {'deep': {'path': 42}}}
+        path = 'a.deep2.path'
+        value = 44
+        get_update_or_create_value(obj, path, value, force_create=True)
+        self.assertEqual(obj['a']['deep2']['path'], 44)
+        self.assertEqual(obj['a']['deep']['path'], 42)
+
+
 if __name__ == '__main__':
     unittest.main()
